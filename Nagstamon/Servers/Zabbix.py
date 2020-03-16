@@ -277,6 +277,10 @@ class ZabbixServer(GenericServer):
                                                   })
                 unack_trigger_ids = [u['triggerid'] for u in unack_triggers]
                 
+                problems = self.zapi.problem.get({'output':['objectid','severity'],
+                                            })
+                problems = { p['objectid'] : p for p in problems }
+                
                 for t in triggers:
                     t['acknowledged'] = False if t['triggerid'] in unack_trigger_ids else True
                     
@@ -292,6 +296,10 @@ class ZabbixServer(GenericServer):
                     except IndexError as e:
                         self.Debug(server=self.get_name(), debug="ItemID '%s' has no values" %
                             t['items'][0]['itemid'], head='WARNING')
+                    
+                    # get updated problem Severity
+                    if t['triggerid'] in problems:
+                        t['priority'] = problems[t['triggerid']]['severity']
 
                     services.append(t)
 
